@@ -1,0 +1,96 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class DynamicTableTest {
+
+    private static final String URL = "https://testpages.herokuapp.com/styled/tag/dynamic-table.html";
+
+    public static void main(String[] args) throws Exception {
+        // Initialize WebDriver and browser
+        WebDriver driver = new ChromeDriver();
+
+        // Prepare test data
+        List<JSONObject> data = createTestData();
+
+        try {
+            // Open the URL
+            driver.get(URL);
+
+            // Click "Table Data" button
+            clickButton(driver, By.id("add-data"));
+
+            // Enter data
+            WebElement inputBox = driver.findElement(By.id("input-data"));
+            inputBox.clear();
+            inputBox.sendKeys(new JSONArray(data).toString());
+
+            // Click "Refresh Table" button
+            clickButton(driver, By.id("refresh-button"));
+
+            // Assert the data
+            assertTableData(driver, data);
+        } finally {
+            // Close the browser
+            driver.quit();
+        }
+    }
+
+    private static void clickButton(WebDriver driver, By by) {
+        WebElement button = driver.findElement(by);
+        button.click();
+    }
+
+    private static List<JSONObject> createTestData() {
+        List<JSONObject> data = new ArrayList<>();
+        data.add(createData("Bob", 20, "male"));
+        data.add(createData("George", 42, "male"));
+        data.add(createData("Sara", 42, "female"));
+        data.add(createData("Conor", 40, "male"));
+        data.add(createData("Jennifer", 42, "female"));
+
+        return data;
+    }
+
+    private static JSONObject createData(String name, int age, String gender) {
+        JSONObject data = new JSONObject();
+        data.put("name", name);
+        data.put("age", age);
+        data.put("gender", gender);
+
+        return data;
+    }
+
+    private static void assertTableData(WebDriver driver, List<JSONObject> data) {
+        // Get table rows
+        List<WebElement> rows = driver.findElements(By.cssSelector("table#table-data tbody tr"));
+
+        // Iterate through rows and compare data
+        for (int i = 0; i < rows.size(); i++) {
+            List<WebElement> cells = rows.get(i).findElements(By.tagName("td"));
+
+            // Extract data from cells
+            String name = cells.get(0).getText();
+            int age = Integer.parseInt(cells.get(1).getText());
+            String gender = cells.get(2).getText();
+
+            // Verify data matches expected
+            JSONObject expectedData = data.get(i);
+            assertEquals(name, expectedData.getString("name"));
+            assertEquals(age, expectedData.getInt("age"));
+            assertEquals(gender, expectedData.getString("gender"));
+        }
+    }
+
+    private static void assertEquals(Object actual, Object expected) {
+        if (!actual.equals(expected)) {
+            throw new AssertionError("Expected: " + expected + ", Actual: " + actual);
+        }
+    }
+}
